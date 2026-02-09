@@ -38,11 +38,11 @@ exports.handler = async (event) => {
     return { statusCode: 429, body: "Too Many Requests" };
   }
 
-  const apiKey = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN;
-  const baseId = process.env.AIRTABLE_BASE_ID;
-  const tableName = process.env.AIRTABLE_PLAYERS_TABLE || "Players";
-  const statusField = process.env.AIRTABLE_PLAYERS_STATUS_FIELD || "Status";
-  const passwordField = process.env.AIRTABLE_PLAYERS_PASSWORD_FIELD || "PasswordHash";
+  const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN || "").trim();
+  const baseId = (process.env.AIRTABLE_BASE_ID || "").trim();
+  const tableName = (process.env.AIRTABLE_PLAYERS_TABLE || "Players").trim();
+  const statusField = (process.env.AIRTABLE_PLAYERS_STATUS_FIELD || "Status").trim();
+  const passwordField = (process.env.AIRTABLE_PLAYERS_PASSWORD_FIELD || "PasswordHash").trim();
 
   if (!apiKey || !baseId) {
     return { statusCode: 500, body: "Missing Airtable env vars" };

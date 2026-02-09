@@ -17,12 +17,12 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  const apiKey = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN;
-  const baseId = process.env.AIRTABLE_BASE_ID;
-  const tableName = process.env.AIRTABLE_PLAYERS_TABLE || "Players";
-  const viewName = process.env.AIRTABLE_PLAYERS_VIEW;
-  const nameField = process.env.AIRTABLE_PLAYERS_NAME_FIELD || "Name";
-  const statusField = process.env.AIRTABLE_PLAYERS_STATUS_FIELD || "Status";
+  const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN || "").trim();
+  const baseId = (process.env.AIRTABLE_BASE_ID || "").trim();
+  const tableName = (process.env.AIRTABLE_PLAYERS_TABLE || "Players").trim();
+  const viewName = (process.env.AIRTABLE_PLAYERS_VIEW || "").trim();
+  const nameField = (process.env.AIRTABLE_PLAYERS_NAME_FIELD || "Name").trim();
+  const statusField = (process.env.AIRTABLE_PLAYERS_STATUS_FIELD || "Status").trim();
 
   if (!apiKey || !baseId) {
     return { statusCode: 500, body: "Missing Airtable env vars" };
@@ -37,6 +37,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         hasApiKey: Boolean(apiKey),
         hasBaseId: Boolean(baseId),
+        baseId,
         tableName,
         viewName: viewName || "",
         nameField,
