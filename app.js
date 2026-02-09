@@ -409,10 +409,6 @@ function render() {
             }
             state[sub.id] = { completed: input.checked };
             saveState();
-            if (input.checked) {
-              playWeaponSound(task.weapon || "cannon");
-              spawnProjectile(taskEl, task.weapon || "cannon");
-            }
             sendToAirtable({
               type: "subtask",
               taskId: task.id,
@@ -421,8 +417,14 @@ function render() {
               subtaskTitle: sub.title,
               completed: input.checked,
             });
-            render();
-            updateStats();
+            if (input.checked) {
+              playWeaponSound(task.weapon || "cannon");
+              spawnProjectile(taskEl, task.weapon || "cannon");
+              setTimeout(() => { render(); updateStats(); }, 1100);
+            } else {
+              render();
+              updateStats();
+            }
           });
           const span = document.createElement("span");
           span.textContent = sub.title;
@@ -481,20 +483,21 @@ function render() {
           completed: input.checked,
         };
         saveState();
-        if (input.checked) {
-          playWeaponSound(task.weapon || "cannon");
-          spawnProjectile(taskEl, task.weapon || "cannon");
-        } else {
-          playSound("undo");
-        }
         sendToAirtable({
           type: "task",
           taskId: task.id,
           taskTitle: task.title,
           completed: input.checked,
         });
-        render();
-        updateStats();
+        if (input.checked) {
+          playWeaponSound(task.weapon || "cannon");
+          spawnProjectile(taskEl, task.weapon || "cannon");
+          setTimeout(() => { render(); updateStats(); }, 1100);
+        } else {
+          playSound("undo");
+          render();
+          updateStats();
+        }
       });
       const checkText = document.createElement("span");
       checkText.textContent = completed ? "Derrotado" : "En combate";
@@ -641,14 +644,17 @@ function formatFullDate(date) {
 }
 function spawnProjectile(container, weapon) {
   const config = WEAPON_CONFIG[weapon] || WEAPON_CONFIG.cannon;
+  container.style.position = "relative";
+  container.style.overflow = "visible";
 
+  // Phase 1: Projectile flies from right (checkbox) to left (monster)
   const projectile = document.createElement("div");
   projectile.className = "projectile";
   projectile.textContent = config.emoji;
-  container.style.position = "relative";
-  container.style.overflow = "visible";
+  projectile.style.setProperty("--proj-color", config.colors[0]);
   container.appendChild(projectile);
 
+  // Phase 2: Explosion at the monster after projectile arrives
   setTimeout(() => {
     projectile.remove();
 
@@ -657,16 +663,16 @@ function spawnProjectile(container, weapon) {
     flash.style.background = config.colors[0];
     container.appendChild(flash);
 
-    const particleCount = 12;
+    const particleCount = 14;
     for (let i = 0; i < particleCount; i += 1) {
       const particle = document.createElement("div");
       particle.className = "explosion-particle";
       const angle = (Math.PI * 2 * i) / particleCount;
-      const distance = 30 + Math.random() * 30;
+      const distance = 35 + Math.random() * 35;
       particle.style.setProperty("--ex", `${Math.cos(angle) * distance}px`);
       particle.style.setProperty("--ey", `${Math.sin(angle) * distance}px`);
       particle.style.background = config.colors[i % 2];
-      particle.style.width = `${4 + Math.random() * 5}px`;
+      particle.style.width = `${5 + Math.random() * 6}px`;
       particle.style.height = particle.style.width;
       container.appendChild(particle);
     }
@@ -674,8 +680,8 @@ function spawnProjectile(container, weapon) {
     setTimeout(() => {
       flash.remove();
       container.querySelectorAll(".explosion-particle").forEach((p) => p.remove());
-    }, 700);
-  }, 400);
+    }, 650);
+  }, 500);
 }
 
 function playWeaponSound(weapon) {
