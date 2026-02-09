@@ -1,0 +1,9 @@
+{
+  "name": "quest-todo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quest Todo - Gaming Mode",
+  "dependencies": {
+    "bcryptjs": "^2.4.3"
+  }
+}
