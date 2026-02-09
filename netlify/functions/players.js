@@ -28,6 +28,23 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: "Missing Airtable env vars" };
   }
 
+  if (event.queryStringParameters?.debug === "1") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        hasApiKey: Boolean(apiKey),
+        hasBaseId: Boolean(baseId),
+        tableName,
+        viewName: viewName || "",
+        nameField,
+        statusField,
+      }),
+    };
+  }
+
   const params = new URLSearchParams();
   if (viewName) {
     params.set("view", viewName);
