@@ -416,9 +416,11 @@ function render() {
               alert("Primero valida la clave del jugador.");
               return;
             }
+            const wasComplete = isSectionComplete(section);
             state[sub.id] = { completed: input.checked };
             saveState();
-            if (isSectionComplete(section)) {
+            const nowComplete = !wasComplete && isSectionComplete(section);
+            if (nowComplete) {
               sendToAirtable({
                 type: "section",
                 sectionTitle: section.title,
@@ -428,7 +430,11 @@ function render() {
             if (input.checked) {
               playWeaponSound(task.weapon || "cannon");
               spawnProjectile(taskEl, task.weapon || "cannon");
-              setTimeout(() => { render(); updateStats(); }, 1100);
+              setTimeout(() => {
+                render();
+                updateStats();
+                if (nowComplete) showSectionReward(section.title);
+              }, 1100);
             } else {
               render();
               updateStats();
@@ -486,12 +492,14 @@ function render() {
           alert("Primero valida la clave del jugador.");
           return;
         }
+        const wasComplete = isSectionComplete(section);
         state[task.id] = {
           ...(state[task.id] || {}),
           completed: input.checked,
         };
         saveState();
-        if (isSectionComplete(section)) {
+        const nowComplete = !wasComplete && isSectionComplete(section);
+        if (nowComplete) {
           sendToAirtable({
             type: "section",
             sectionTitle: section.title,
@@ -501,7 +509,11 @@ function render() {
         if (input.checked) {
           playWeaponSound(task.weapon || "cannon");
           spawnProjectile(taskEl, task.weapon || "cannon");
-          setTimeout(() => { render(); updateStats(); }, 1100);
+          setTimeout(() => {
+            render();
+            updateStats();
+            if (nowComplete) showSectionReward(section.title);
+          }, 1100);
         } else {
           playSound("undo");
           render();
@@ -609,6 +621,36 @@ function isSectionComplete(section) {
     }
     return true;
   });
+}
+
+const SECTION_REWARDS = {
+  "Morning Tasks": { shield: "🛡️", line: "Morning Tasks conquered!" },
+  "Arrivals & Departures": { shield: "⚔️", line: "Arrivals & Departures cleared!" },
+  "Reservations Follow-Up": { shield: "🏅", line: "Reservations Follow-Up mastered!" },
+  "Afternoon Tasks": { shield: "🎖️", line: "Afternoon Tasks vanquished!" },
+  "Notes / Important Observations": { shield: "📜", line: "Notes recorded successfully!" },
+  "Pending for Next Day": { shield: "🏆", line: "Pending items logged!" },
+};
+
+function showSectionReward(sectionTitle) {
+  const reward = SECTION_REWARDS[sectionTitle] || { shield: "🏆", line: `${sectionTitle} completed!` };
+  const overlay = document.createElement("div");
+  overlay.className = "section-reward";
+  overlay.innerHTML = `
+    <div class="section-reward-card">
+      <div class="reward-shield">${reward.shield}</div>
+      <div class="reward-title">Great!</div>
+      <div class="reward-line">${reward.line}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  playSound("celebration");
+  const dismiss = () => {
+    overlay.classList.add("reward-exit");
+    setTimeout(() => overlay.remove(), 400);
+  };
+  overlay.addEventListener("click", dismiss);
+  setTimeout(dismiss, 3000);
 }
 
 function launchConfetti() {
