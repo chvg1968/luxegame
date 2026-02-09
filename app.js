@@ -144,6 +144,7 @@ const playerLabel = document.getElementById("playerLabel");
 const playerSelect = document.getElementById("playerSelect");
 const playerStatus = document.getElementById("playerStatus");
 const playerPassword = document.getElementById("playerPassword");
+const playerLoginBtn = document.getElementById("playerLoginBtn");
 const playerToggleBtn = document.getElementById("playerToggleBtn");
 const audioToggle = document.getElementById("audioToggle");
 
@@ -152,6 +153,7 @@ let audioContext = null;
 let audioEnabled = meta.audioEnabled ?? true;
 let noteDebounce = null;
 let cachedPlayers = [];
+let authenticatedPlayerId = meta.authenticatedPlayerId || null;
 
 render();
 updateStats();
@@ -176,8 +178,40 @@ playerSelect.addEventListener("change", () => {
   const selectedId = playerSelect.value;
   const selected = cachedPlayers.find((player) => player.id === selectedId);
   meta.player = selected ? selected.name : DEFAULT_PLAYER;
+  authenticatedPlayerId = null;
+  meta.authenticatedPlayerId = null;
   saveMeta();
   updateMetaUI();
+});
+
+playerLoginBtn.addEventListener("click", async () => {
+  const selectedId = playerSelect.value;
+  const selected = cachedPlayers.find((player) => player.id === selectedId);
+  if (!selected) return;
+  const password = playerPassword.value.trim();
+  if (!password) {
+    alert("Ingresa la clave del jugador.");
+    return;
+  }
+  playerLoginBtn.disabled = true;
+  try {
+    const response = await fetch("/.netlify/functions/players-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId: selected.id, password }),
+    });
+    if (!response.ok) throw new Error("verify failed");
+    authenticatedPlayerId = selected.id;
+    meta.authenticatedPlayerId = selected.id;
+    playerPassword.value = "";
+    saveMeta();
+    updateMetaUI();
+    playSound("toggle");
+  } catch (error) {
+    alert("Clave incorrecta.");
+  } finally {
+    playerLoginBtn.disabled = false;
+  }
 });
 
 playerToggleBtn.addEventListener("click", async () => {
@@ -256,7 +290,7 @@ function saveMeta() {
 
 function updateMetaUI() {
   const now = new Date();
-  weekdayLabel.textContent = WEEKDAYS[now.getDay()];
+  weekdayLabel.textContent = formatFullDate(now);
   const currentPlayer = meta.player || DEFAULT_PLAYER;
   playerLabel.textContent = currentPlayer;
   if (playerSelect.options.length) {
@@ -273,6 +307,10 @@ function updateMetaUI() {
       playerToggleBtn.textContent = "Desactivar";
     }
   }
+  const isAuthed = authenticatedPlayerId && playerSelect.value === authenticatedPlayerId;
+  playerLoginBtn.textContent = isAuthed ? "Validado" : "Ingresar";
+  playerLoginBtn.disabled = isAuthed;
+  document.body.classList.toggle("locked", !isAuthed);
   audioToggle.checked = Boolean(audioEnabled);
 }
 
@@ -329,6 +367,11 @@ function render() {
           input.type = "checkbox";
           input.checked = Boolean(state[sub.id]?.completed);
           input.addEventListener("change", () => {
+            if (!isPlayerAuthenticated()) {
+              input.checked = false;
+              alert("Primero valida la clave del jugador.");
+              return;
+            }
             state[sub.id] = { completed: input.checked };
             saveState();
             if (input.checked) {
@@ -361,6 +404,11 @@ function render() {
         note.placeholder = "Escribe aqui...";
         note.value = state[task.id]?.note || "";
         note.addEventListener("input", () => {
+          if (!isPlayerAuthenticated()) {
+            note.value = state[task.id]?.note || "";
+            alert("Primero valida la clave del jugador.");
+            return;
+          }
           state[task.id] = {
             ...(state[task.id] || {}),
             note: note.value,
@@ -388,6 +436,11 @@ function render() {
       input.type = "checkbox";
       input.checked = completed;
       input.addEventListener("change", () => {
+        if (!isPlayerAuthenticated()) {
+          input.checked = completed;
+          alert("Primero valida la clave del jugador.");
+          return;
+        }
         state[task.id] = {
           ...(state[task.id] || {}),
           completed: input.checked,
@@ -519,6 +572,38 @@ function launchConfetti() {
   }
 }
 
+function isPlayerAuthenticated() {
+  return authenticatedPlayerId && playerSelect.value === authenticatedPlayerId;
+}
+
+function formatFullDate(date) {
+  const weekday = WEEKDAYS[date.getDay()];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const suffix =
+    day % 10 === 1 && day % 100 !== 11
+      ? "st"
+      : day % 10 === 2 && day % 100 !== 12
+      ? "nd"
+      : day % 10 === 3 && day % 100 !== 13
+      ? "rd"
+      : "th";
+  return `${weekday}: ${months[date.getMonth()]} ${day}${suffix}, ${year}`;
+}
 function spawnImpact(container) {
   const ring = document.createElement("div");
   ring.className = "impact-ring";
