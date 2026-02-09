@@ -25,20 +25,23 @@ exports.handler = async (event) => {
   const passwordField = process.env.AIRTABLE_PLAYERS_PASSWORD_FIELD || "PasswordHash";
 
   if (!apiKey || !baseId) {
-    return { statusCode: 500, body: "Missing Airtable env vars" };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: "Faltan variables de entorno de Airtable." }),
+    };
   }
 
   let payload = {};
   try {
     payload = JSON.parse(event.body || "{}");
   } catch (error) {
-    return { statusCode: 400, body: "Invalid JSON" };
+    return { statusCode: 400, body: JSON.stringify({ message: "JSON invalido." }) };
   }
 
   const playerId = payload.playerId;
   const password = payload.password;
   if (!playerId || !password) {
-    return { statusCode: 400, body: "Missing fields" };
+    return { statusCode: 400, body: JSON.stringify({ message: "Faltan campos." }) };
   }
 
   const recordUrl = `${AIRTABLE_API}/${baseId}/${encodeURIComponent(tableName)}/${playerId}`;
@@ -46,17 +49,17 @@ exports.handler = async (event) => {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
   if (!recordResponse.ok) {
-    return { statusCode: 404, body: "Player not found" };
+    return { statusCode: 404, body: JSON.stringify({ message: "Jugador no encontrado." }) };
   }
   const record = await recordResponse.json();
   const passwordHash = record.fields?.[passwordField];
   if (!passwordHash || typeof passwordHash !== "string") {
-    return { statusCode: 403, body: "Password hash missing" };
+    return { statusCode: 403, body: JSON.stringify({ message: "Hash no encontrado." }) };
   }
 
   const valid = await bcrypt.compare(password, passwordHash);
   if (!valid) {
-    return { statusCode: 401, body: "Invalid password" };
+    return { statusCode: 401, body: JSON.stringify({ message: "Clave incorrecta." }) };
   }
 
   return {

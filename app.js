@@ -200,7 +200,16 @@ playerLoginBtn.addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerId: selected.id, password }),
     });
-    if (!response.ok) throw new Error("verify failed");
+    if (!response.ok) {
+      let message = "Clave incorrecta.";
+      try {
+        const data = await response.json();
+        if (data?.message) message = data.message;
+      } catch (error) {
+        // ignore parsing errors
+      }
+      throw new Error(message);
+    }
     authenticatedPlayerId = selected.id;
     meta.authenticatedPlayerId = selected.id;
     playerPassword.value = "";
@@ -208,7 +217,7 @@ playerLoginBtn.addEventListener("click", async () => {
     updateMetaUI();
     playSound("toggle");
   } catch (error) {
-    alert("Clave incorrecta.");
+    alert(error.message || "Clave incorrecta.");
   } finally {
     playerLoginBtn.disabled = false;
   }
