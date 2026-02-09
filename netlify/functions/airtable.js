@@ -42,8 +42,8 @@ exports.handler = async (event) => {
       "Completed": Boolean(payload.completed),
       "Note": payload.note || "",
       "Player": payload.player || "",
-      "Day Of Week": payload.dayOfWeek || "",
-      "Date ISO": payload.dateISO || "",
+      "Day of Week": payload.dayOfWeek || "",
+      "Date ISO": payload.dateISO ? payload.dateISO.split("T")[0] : "",
     },
   };
 
