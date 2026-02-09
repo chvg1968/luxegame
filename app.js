@@ -132,6 +132,14 @@ const questData = [
   },
 ];
 
+const WEAPON_CONFIG = {
+  cannon: { emoji: "💣", colors: ["#ff5c40", "#f9b84a"] },
+  arrow:  { emoji: "🏹", colors: ["#5cff9e", "#a8ffcf"] },
+  laser:  { emoji: "⚡", colors: ["#5cf2ff", "#4b76ff"] },
+  rocket: { emoji: "🚀", colors: ["#ff5c78", "#f9b84a"] },
+  magic:  { emoji: "🔮", colors: ["#9b7bff", "#d4a5ff"] },
+};
+
 const STORAGE_KEY = "quest-todo-state";
 const META_KEY = "quest-todo-meta";
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
@@ -631,14 +639,6 @@ function formatFullDate(date) {
       : "th";
   return `${weekday}: ${months[date.getMonth()]} ${day}${suffix}, ${year}`;
 }
-const WEAPON_CONFIG = {
-  cannon: { emoji: "💣", colors: ["#ff5c40", "#f9b84a"] },
-  arrow:  { emoji: "🏹", colors: ["#5cff9e", "#a8ffcf"] },
-  laser:  { emoji: "⚡", colors: ["#5cf2ff", "#4b76ff"] },
-  rocket: { emoji: "🚀", colors: ["#ff5c78", "#f9b84a"] },
-  magic:  { emoji: "🔮", colors: ["#9b7bff", "#d4a5ff"] },
-};
-
 function spawnProjectile(container, weapon) {
   const config = WEAPON_CONFIG[weapon] || WEAPON_CONFIG.cannon;
 
