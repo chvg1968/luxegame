@@ -8,12 +8,14 @@ const questData = [
         title: "8:00 AM: Send check-out (CO) instructions to guests leaving the next day.",
         monster: "👾",
         treasure: "🪙",
+        weapon: "cannon",
       },
       {
         id: "morning-2",
         title: "Review the calendar for arrivals today and tomorrow.",
         monster: "🐉",
         treasure: "💎",
+        weapon: "arrow",
         subtasks: [
           {
             id: "morning-2-1",
@@ -30,6 +32,7 @@ const questData = [
         title: "Review special requests for current stays.",
         monster: "🦂",
         treasure: "🗝️",
+        weapon: "laser",
         subtasks: [
           {
             id: "morning-3-1",
@@ -45,15 +48,17 @@ const questData = [
     tasks: [
       {
         id: "arrival-1",
-        title: "Schedule and/or send check-in (CI) OK messages to today’s arrivals at their confirmed check-in time.",
+        title: "Schedule and/or send check-in (CI) OK messages to today's arrivals at their confirmed check-in time.",
         monster: "🧟",
         treasure: "🪙",
+        weapon: "rocket",
       },
       {
         id: "arrival-2",
-        title: "Schedule and/or send 5-star review messages after the guests’ confirmed check-out time for those checking out today.",
+        title: "Schedule and/or send 5-star review messages after the guests' confirmed check-out time for those checking out today.",
         monster: "🦑",
         treasure: "🏆",
+        weapon: "magic",
       },
     ],
   },
@@ -66,18 +71,21 @@ const questData = [
         title: "Review current month reservations.",
         monster: "🪨",
         treasure: "💰",
+        weapon: "cannon",
       },
       {
         id: "reserv-2",
         title: "Review future month reservations.",
         monster: "🐲",
         treasure: "💎",
+        weapon: "arrow",
       },
       {
         id: "reserv-3",
         title: "Follow up to complete missing checkmarks and get reservations marked in yellow.",
         monster: "🧠",
         treasure: "🗝️",
+        weapon: "laser",
       },
     ],
   },
@@ -87,9 +95,10 @@ const questData = [
     tasks: [
       {
         id: "after-1",
-        title: "Send to the group chat the next day’s check-in and check-out times for each villa.",
+        title: "Send to the group chat the next day's check-in and check-out times for each villa.",
         monster: "🦅",
         treasure: "🪙",
+        weapon: "rocket",
       },
     ],
   },
@@ -102,6 +111,7 @@ const questData = [
         title: "Anything relevant from today: guest feedback, issues, reminders, follow-ups",
         monster: "🧩",
         treasure: "📦",
+        weapon: "magic",
         type: "note",
       },
     ],
@@ -115,6 +125,7 @@ const questData = [
         title: "Tasks not completed today or items to follow up tomorrow",
         monster: "🛡️",
         treasure: "🎒",
+        weapon: "cannon",
         type: "note",
       },
     ],
@@ -349,6 +360,13 @@ function render() {
       monsterEl.className = "monster";
       monsterEl.textContent = task.monster;
 
+      const weaponCfg = WEAPON_CONFIG[task.weapon] || WEAPON_CONFIG.cannon;
+      const weaponBadge = document.createElement("div");
+      weaponBadge.className = "weapon-badge";
+      weaponBadge.textContent = weaponCfg.emoji;
+      monsterEl.style.position = "relative";
+      monsterEl.appendChild(weaponBadge);
+
       const infoEl = document.createElement("div");
       infoEl.className = "task-info";
 
@@ -384,8 +402,8 @@ function render() {
             state[sub.id] = { completed: input.checked };
             saveState();
             if (input.checked) {
-              playSound("subtask");
-              spawnImpact(taskEl);
+              playWeaponSound(task.weapon || "cannon");
+              spawnProjectile(taskEl, task.weapon || "cannon");
             }
             sendToAirtable({
               type: "subtask",
@@ -456,8 +474,8 @@ function render() {
         };
         saveState();
         if (input.checked) {
-          playSound("complete");
-          spawnImpact(taskEl);
+          playWeaponSound(task.weapon || "cannon");
+          spawnProjectile(taskEl, task.weapon || "cannon");
         } else {
           playSound("undo");
         }
@@ -613,25 +631,144 @@ function formatFullDate(date) {
       : "th";
   return `${weekday}: ${months[date.getMonth()]} ${day}${suffix}, ${year}`;
 }
-function spawnImpact(container) {
-  const ring = document.createElement("div");
-  ring.className = "impact-ring";
-  container.appendChild(ring);
-  const sparks = 8;
-  for (let i = 0; i < sparks; i += 1) {
-    const spark = document.createElement("div");
-    spark.className = "spark";
-    const angle = (Math.PI * 2 * i) / sparks;
-    const distance = 24 + Math.random() * 18;
-    spark.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
-    spark.style.setProperty("--ty", `${Math.sin(angle) * distance}px`);
-    spark.style.background = i % 2 === 0 ? "#5cff9e" : "#5cf2ff";
-    container.appendChild(spark);
-  }
+const WEAPON_CONFIG = {
+  cannon: { emoji: "💣", colors: ["#ff5c40", "#f9b84a"] },
+  arrow:  { emoji: "🏹", colors: ["#5cff9e", "#a8ffcf"] },
+  laser:  { emoji: "⚡", colors: ["#5cf2ff", "#4b76ff"] },
+  rocket: { emoji: "🚀", colors: ["#ff5c78", "#f9b84a"] },
+  magic:  { emoji: "🔮", colors: ["#9b7bff", "#d4a5ff"] },
+};
+
+function spawnProjectile(container, weapon) {
+  const config = WEAPON_CONFIG[weapon] || WEAPON_CONFIG.cannon;
+
+  const projectile = document.createElement("div");
+  projectile.className = "projectile";
+  projectile.textContent = config.emoji;
+  container.style.position = "relative";
+  container.style.overflow = "visible";
+  container.appendChild(projectile);
+
   setTimeout(() => {
-    ring.remove();
-    container.querySelectorAll(".spark").forEach((spark) => spark.remove());
-  }, 900);
+    projectile.remove();
+
+    const flash = document.createElement("div");
+    flash.className = "explosion-flash";
+    flash.style.background = config.colors[0];
+    container.appendChild(flash);
+
+    const particleCount = 12;
+    for (let i = 0; i < particleCount; i += 1) {
+      const particle = document.createElement("div");
+      particle.className = "explosion-particle";
+      const angle = (Math.PI * 2 * i) / particleCount;
+      const distance = 30 + Math.random() * 30;
+      particle.style.setProperty("--ex", `${Math.cos(angle) * distance}px`);
+      particle.style.setProperty("--ey", `${Math.sin(angle) * distance}px`);
+      particle.style.background = config.colors[i % 2];
+      particle.style.width = `${4 + Math.random() * 5}px`;
+      particle.style.height = particle.style.width;
+      container.appendChild(particle);
+    }
+
+    setTimeout(() => {
+      flash.remove();
+      container.querySelectorAll(".explosion-particle").forEach((p) => p.remove());
+    }, 700);
+  }, 400);
+}
+
+function playWeaponSound(weapon) {
+  if (!audioEnabled) return;
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended") ctx.resume();
+  const now = ctx.currentTime;
+
+  if (weapon === "cannon") {
+    const bufferSize = ctx.sampleRate * 0.3;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.3, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    noise.connect(noiseGain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + 0.25);
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(0.35, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(oscGain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } else if (weapon === "arrow") {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (weapon === "laser") {
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(1800, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.2);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  } else if (weapon === "rocket") {
+    const bufferSize = ctx.sampleRate * 0.15;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.15, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    noise.connect(noiseGain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + 0.15);
+    const osc = ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(0.25, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(oscGain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  } else if (weapon === "magic") {
+    const freqs = [523, 659, 784];
+    freqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.3);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.02 + idx * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + idx * 0.04);
+      osc.stop(now + 0.35);
+    });
+  }
 }
 
 function getAudioContext() {
