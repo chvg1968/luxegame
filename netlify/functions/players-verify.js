@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  const apiKey = process.env.AIRTABLE_API_KEY;
+  const apiKey = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID;
   const tableName = process.env.AIRTABLE_PLAYERS_TABLE || "Players";
   const passwordField = process.env.AIRTABLE_PLAYERS_PASSWORD_FIELD || "PasswordHash";
