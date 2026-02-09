@@ -50,8 +50,8 @@ exports.handler = async (event) => {
   if (viewName) {
     params.set("view", viewName);
   }
-  params.set("fields[]", nameField);
-  params.set("fields[]", statusField);
+  params.append("fields[]", nameField);
+  params.append("fields[]", statusField);
   params.set("pageSize", "100");
 
   const url = `${AIRTABLE_API}/${baseId}/${encodeURIComponent(tableName)}?${params.toString()}`;
