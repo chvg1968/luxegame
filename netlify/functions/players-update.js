@@ -38,7 +38,7 @@ exports.handler = async (event) => {
     return { statusCode: 429, body: "Too Many Requests" };
   }
 
-  const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN || "").trim();
+  const apiKey = (process.env.AIRTABLE_TOKEN || process.env.AIRTABLE_API_KEY || "").trim();
   const baseId = (process.env.AIRTABLE_BASE_ID || "").trim();
   const tableName = (process.env.AIRTABLE_PLAYERS_TABLE || "Players").trim();
   const statusField = (process.env.AIRTABLE_PLAYERS_STATUS_FIELD || "Status").trim();
