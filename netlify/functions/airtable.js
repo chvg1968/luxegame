@@ -34,10 +34,7 @@ exports.handler = async (event) => {
 
   const record = {
     fields: {
-      "Task ID": payload.taskId || "",
-      "Task Title": payload.taskTitle || "",
-      "Subtask ID": payload.subtaskId || "",
-      "Subtask Title": payload.subtaskTitle || "",
+      "Section Title": payload.sectionTitle || "",
       "Type": payload.type || "",
       "Completed": Boolean(payload.completed),
       "Note": payload.note || "",

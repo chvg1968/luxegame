@@ -418,14 +418,13 @@ function render() {
             }
             state[sub.id] = { completed: input.checked };
             saveState();
-            sendToAirtable({
-              type: "subtask",
-              taskId: task.id,
-              taskTitle: task.title,
-              subtaskId: sub.id,
-              subtaskTitle: sub.title,
-              completed: input.checked,
-            });
+            if (isSectionComplete(section)) {
+              sendToAirtable({
+                type: "section",
+                sectionTitle: section.title,
+                completed: true,
+              });
+            }
             if (input.checked) {
               playWeaponSound(task.weapon || "cannon");
               spawnProjectile(taskEl, task.weapon || "cannon");
@@ -492,12 +491,13 @@ function render() {
           completed: input.checked,
         };
         saveState();
-        sendToAirtable({
-          type: "task",
-          taskId: task.id,
-          taskTitle: task.title,
-          completed: input.checked,
-        });
+        if (isSectionComplete(section)) {
+          sendToAirtable({
+            type: "section",
+            sectionTitle: section.title,
+            completed: true,
+          });
+        }
         if (input.checked) {
           playWeaponSound(task.weapon || "cannon");
           spawnProjectile(taskEl, task.weapon || "cannon");
@@ -599,6 +599,16 @@ function stopCelebration() {
     fireworksEngine.stop();
     fireworksEngine = null;
   }
+}
+
+function isSectionComplete(section) {
+  return section.tasks.every((task) => {
+    if (!state[task.id]?.completed) return false;
+    if (task.subtasks?.length) {
+      return task.subtasks.every((sub) => state[sub.id]?.completed);
+    }
+    return true;
+  });
 }
 
 function launchConfetti() {
