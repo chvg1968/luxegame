@@ -345,6 +345,11 @@ function updateMetaUI() {
 function render() {
   questBoard.innerHTML = "";
 
+  const allTasksFlat = [];
+  questData.forEach((s) => s.tasks.forEach((t) => allTasksFlat.push(t)));
+  let firstIncompleteIdx = allTasksFlat.findIndex((t) => !state[t.id]?.completed);
+  if (firstIncompleteIdx === -1) firstIncompleteIdx = allTasksFlat.length;
+
   questData.forEach((section) => {
     const sectionEl = document.createElement("div");
     sectionEl.className = "section";
@@ -364,6 +369,10 @@ function render() {
       const completed = Boolean(state[task.id]?.completed);
       if (completed) taskEl.classList.add("completed");
 
+      const taskFlatIdx = allTasksFlat.indexOf(task);
+      const isLocked = taskFlatIdx > firstIncompleteIdx;
+      if (isLocked) taskEl.classList.add("locked");
+
       const monsterEl = document.createElement("div");
       monsterEl.className = "monster";
       monsterEl.textContent = task.monster;
@@ -371,7 +380,7 @@ function render() {
       const weaponCfg = WEAPON_CONFIG[task.weapon] || WEAPON_CONFIG.cannon;
       const weaponBadge = document.createElement("div");
       weaponBadge.className = "weapon-badge";
-      weaponBadge.textContent = weaponCfg.emoji;
+      weaponBadge.textContent = isLocked ? "🔒" : weaponCfg.emoji;
       monsterEl.style.position = "relative";
       monsterEl.appendChild(weaponBadge);
 

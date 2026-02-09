@@ -466,6 +466,13 @@ body {
   border-color: rgba(92, 242, 255, 0.9);
 }
 
+.task.locked {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  pointer-events: none;
+  user-select: none;
+}
+
 .task.completed {
   border-color: rgba(92, 255, 158, 0.6);
   box-shadow: 0 0 20px rgba(92, 255, 158, 0.2);
