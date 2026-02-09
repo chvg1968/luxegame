@@ -44,6 +44,19 @@ exports.handler = async (event) => {
   });
 
   const data = await response.json();
+  if (!response.ok) {
+    return {
+      statusCode: response.status,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        message: "Error al leer Players desde Airtable.",
+        airtableStatus: response.status,
+        airtableError: data,
+      }),
+    };
+  }
   const players = Array.isArray(data.records)
     ? data.records
         .map((record) => ({
