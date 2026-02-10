@@ -504,20 +504,18 @@ function render() {
           completed: input.checked,
         };
         saveState();
+        const nowComplete = !wasComplete && isSectionComplete(section);
         if (input.checked && task.type === "note") {
           const currentNote = state[task.id]?.note || "";
-          if (currentNote.trim()) {
-            sendToAirtable({
-              type: "note",
-              sectionTitle: section.title,
-              taskId: task.id,
-              taskTitle: task.title,
-              note: currentNote,
-            });
-          }
-        }
-        const nowComplete = !wasComplete && isSectionComplete(section);
-        if (nowComplete) {
+          sendToAirtable({
+            type: "note",
+            sectionTitle: section.title,
+            taskId: task.id,
+            taskTitle: task.title,
+            note: currentNote,
+            completed: nowComplete,
+          });
+        } else if (nowComplete) {
           sendToAirtable({
             type: "section",
             sectionTitle: section.title,
