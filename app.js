@@ -473,18 +473,6 @@ function render() {
           };
           saveState();
         });
-        note.addEventListener("blur", () => {
-          if (!isPlayerAuthenticated()) return;
-          const currentNote = state[task.id]?.note || "";
-          if (!currentNote.trim()) return;
-          sendToAirtable({
-            type: "note",
-            sectionTitle: section.title,
-            taskId: task.id,
-            taskTitle: task.title,
-            note: currentNote,
-          });
-        });
         infoEl.appendChild(note);
       }
 
@@ -516,6 +504,18 @@ function render() {
           completed: input.checked,
         };
         saveState();
+        if (input.checked && task.type === "note") {
+          const currentNote = state[task.id]?.note || "";
+          if (currentNote.trim()) {
+            sendToAirtable({
+              type: "note",
+              sectionTitle: section.title,
+              taskId: task.id,
+              taskTitle: task.title,
+              note: currentNote,
+            });
+          }
+        }
         const nowComplete = !wasComplete && isSectionComplete(section);
         if (nowComplete) {
           sendToAirtable({
