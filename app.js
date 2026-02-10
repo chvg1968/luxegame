@@ -69,7 +69,7 @@ const questData = [
         subtasks: [
           {
             id: "arrival-3-1",
-            title: "Make sure to send golf cart inspection reminder via playform, text, email, call and/or print if necessary.",
+            title: "Make sure to send golf cart inspection reminder via platform, text, email, call and/or print if necessary.",
           },
           {
             id: "arrival-3-2",
