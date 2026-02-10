@@ -60,6 +60,23 @@ const questData = [
         treasure: "🏆",
         weapon: "magic",
       },
+      {
+        id: "arrival-3",
+        title: "Check ins of the current and/or previous day",
+        monster: "🛂",
+        treasure: "🗝️",
+        weapon: "laser",
+        subtasks: [
+          {
+            id: "arrival-3-1",
+            title: "Make sure to send golf cart inspection reminder via playform, text, email, call and/or print if necessary.",
+          },
+          {
+            id: "arrival-3-2",
+            title: "Make sure the CIs of today and at the latest of yesterday are all green.",
+          },
+        ],
+      },
     ],
   },
   {
@@ -170,7 +187,6 @@ const audioToggle = document.getElementById("audioToggle");
 let fireworksEngine = null;
 let audioContext = null;
 let audioEnabled = meta.audioEnabled ?? true;
-let noteDebounce = null;
 let cachedPlayers = [];
 let authenticatedPlayerId = meta.authenticatedPlayerId || null;
 
@@ -345,11 +361,6 @@ function updateMetaUI() {
 function render() {
   questBoard.innerHTML = "";
 
-  const allTasksFlat = [];
-  questData.forEach((s) => s.tasks.forEach((t) => allTasksFlat.push(t)));
-  let firstIncompleteIdx = allTasksFlat.findIndex((t) => !state[t.id]?.completed);
-  if (firstIncompleteIdx === -1) firstIncompleteIdx = allTasksFlat.length;
-
   questData.forEach((section) => {
     const sectionEl = document.createElement("div");
     sectionEl.className = "section";
@@ -369,10 +380,6 @@ function render() {
       const completed = Boolean(state[task.id]?.completed);
       if (completed) taskEl.classList.add("completed");
 
-      const taskFlatIdx = allTasksFlat.indexOf(task);
-      const isLocked = taskFlatIdx > firstIncompleteIdx;
-      if (isLocked) taskEl.classList.add("locked");
-
       const monsterEl = document.createElement("div");
       monsterEl.className = "monster";
       monsterEl.textContent = task.monster;
@@ -380,7 +387,7 @@ function render() {
       const weaponCfg = WEAPON_CONFIG[task.weapon] || WEAPON_CONFIG.cannon;
       const weaponBadge = document.createElement("div");
       weaponBadge.className = "weapon-badge";
-      weaponBadge.textContent = isLocked ? "🔒" : weaponCfg.emoji;
+      weaponBadge.textContent = weaponCfg.emoji;
       monsterEl.style.position = "relative";
       monsterEl.appendChild(weaponBadge);
 
@@ -465,15 +472,18 @@ function render() {
             note: note.value,
           };
           saveState();
-          if (noteDebounce) clearTimeout(noteDebounce);
-          noteDebounce = setTimeout(() => {
-            sendToAirtable({
-              type: "note",
-              taskId: task.id,
-              taskTitle: task.title,
-              note: note.value,
-            });
-          }, 800);
+        });
+        note.addEventListener("blur", () => {
+          if (!isPlayerAuthenticated()) return;
+          const currentNote = state[task.id]?.note || "";
+          if (!currentNote.trim()) return;
+          sendToAirtable({
+            type: "note",
+            sectionTitle: section.title,
+            taskId: task.id,
+            taskTitle: task.title,
+            note: currentNote,
+          });
         });
         infoEl.appendChild(note);
       }
@@ -491,6 +501,14 @@ function render() {
           input.checked = completed;
           alert("Primero valida la clave del jugador.");
           return;
+        }
+        if (input.checked && task.subtasks?.length) {
+          const allSubsDone = task.subtasks.every((sub) => state[sub.id]?.completed);
+          if (!allSubsDone) {
+            input.checked = false;
+            alert("Completa todas las subtareas antes de aprobar esta tarea.");
+            return;
+          }
         }
         const wasComplete = isSectionComplete(section);
         state[task.id] = {
